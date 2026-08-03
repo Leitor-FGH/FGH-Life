@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FGH life - Manager</title>
+  <style>
+    :root {
+      --bg-dark: #0f1216;
+      --bg-card: #181e24;
+      --bg-sidebar: #13171c;
+      --accent: #ff6b00;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --border: #30363d;
+      --safe: #2ecc71;
+      --risk: #f1c40f;
+      --eliminated: #e74c3c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* LAYOUT PRINCIPAL */
+    .app-container { display: flex; flex: 1; overflow: hidden; }
+    
+    /* BARRA LATERAL */
+    #sidebar {
+      width: 280px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 15px; overflow-y: auto;
+    }
+    .brand { font-size: 1.4rem; font-weight: bold; color: var(--accent); margin-bottom: 20px; text-align: center; }
+    
+    .menu-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin: 15px 0 8px 0; font-weight: bold; }
+    .nav-list { list-style: none; margin-bottom: 10px; }
+    .nav-item {
+      padding: 10px; border-radius: 6px; cursor: pointer; margin-bottom: 5px;
+      display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
+    }
+    .nav-item:hover, .nav-item.active { background: var(--bg-card); border-left: 3px solid var(--accent); }
+
+    .btn-new { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 10px; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 5px; }
+
+    /* CONTENIDO */
+    #main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+    header { background: var(--bg-card); padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .content-area { padding: 25px; flex: 1; overflow-y: auto; }
+
+    /* TARJETAS Y FORMULARIOS */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .card h3 { color: var(--accent); margin-bottom: 15px; font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    
+    input, select, textarea { width: 100%; padding: 10px; background: #0d1117; border: 1px solid var(--border); color: var(--text); border-radius: 6px; margin-bottom: 10px; }
+    button.action-btn { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    
+    /* MODALES */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; border: 1px solid var(--accent); }
+    .modal.active { display: flex; }
+    .modal-overlay.active { display: flex; }
+
+    /* OTROS */
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+    .badge-safe { background: var(--safe); color: black; }
+    .badge-risk { background: var(--risk); color: black; }
+    .badge-eliminated { background: var(--eliminated); color: white; }
+    
+    footer { text-align: center; padding: 10px; background: var(--bg-sidebar); border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted); }
+    .creator-only { display: none; }
+    body.is-admin .creator-only { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="modal-overlay" id="login-modal">
+    <div class="modal" style="flex-direction: column;">
+      <h2 style="color: var(--accent); margin-bottom: 15px; text-align: center;">Bienvenido a FGH life</h2>
+      <p style="margin-bottom: 15px; text-align: center; color: var(--text-muted);">Inicia sesión para continuar</p>
+      <input type="text" id="login-username" placeholder="Tu nombre de usuario...">
+      <button class="action-btn" onclick="login()">Entrar</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="tutorial-modal">
+    <div class="modal" style="flex-direction: column;">
+      <h2 style="color: var(--accent); margin-bottom: 15px;">📖 Tutorial Rápido</h2>
+      <p style="margin-bottom: 10px; font-size: 0.9rem;">1. <b>Competencias:</b> Cualquiera puede crear torneos eligiendo el modo de juego y administrarlos.</p>
+      <p style="margin-bottom: 10px; font-size: 0.9rem;">2. <b>Historia y Anuncios:</b> Son espacios oficiales. Solo el Creador puede publicar aquí.</p>
+      <p style="margin-bottom: 10px; font-size: 0.9rem;">3. <b>Desafíos:</b> Puedes dividirlos en partes. El tercio inferior de resultados irá a peligro.</p>
+      <p style="margin-bottom: 15px; font-size: 0.9rem;">4. <b>Votos:</b> Al eliminar a alguien, registra cuántos votos recibió.</p>
+      <button class="action-btn" onclick="closeTutorial()">¡Entendido!</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="new-comp-modal">
+    <div class="modal" style="flex-direction: column;">
+      <h2 style="color: var(--accent); margin-bottom: 15px;">Nueva Competencia</h2>
+      <input type="text" id="nc-name" placeholder="Nombre de la temporada">
+      
+      <label class="menu-label">Modo de Juego</label>
+      <select id="nc-mode">
+        <option value="Normal">Normal (Desafío, voto, eliminación)</option>
+        <option value="Carrera">Carrera (Último eliminado)</option>
+        <option value="Estilo GH">Estilo GH (Nominación 2 y 1, voto, eliminación)</option>
+        <option value="Estilo Lghej">Estilo Lghej (Desafío, reto doble voto, eliminación)</option>
+      </select>
+
+      <label class="menu-label">Formato</label>
+      <select id="nc-format">
+        <option value="Solitario">Solitario</option>
+        <option value="Duos">Dúos</option>
+        <option value="Equipos">Equipos (Fusión más adelante)</option>
+      </select>
+
+      <label class="menu-label">Líderes</label>
+      <select id="nc-leaders">
+        <option value="No">No hay líderes</option>
+        <option value="Si">Sí (Salvan a 1, condenan a 1)</option>
+      </select>
+
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button class="action-btn" onclick="saveNewCompetition()" style="flex: 1;">Crear</button>
+        <button class="btn-outline" onclick="document.getElementById('new-comp-modal').classList.remove('active')" style="flex: 1;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <div id="sidebar">
+      <div class="brand">🔥 FGH life</div>
+      
+      <div style="font-size: 0.8rem; margin-bottom: 15px; color: var(--text-muted);">
+        👤 <span id="current-user-display"></span>
+      </div>
+
+      <button class="btn-new" onclick="openNewCompModal()">+ Crear Competencia</button>
+
+      <label class="menu-label">Mis Competencias</label>
+      <ul class="nav-list" id="comp-list"></ul>
+
+      <label class="menu-label">Global (Oficial)</label>
+      <ul class="nav-list">
+        <li class="nav-item" onclick="switchMainTab('historia-global')">📖 Historia</li>
+        <li class="nav-item" onclick="switchMainTab('anuncios-global')">📢 Anuncios</li>
+      </ul>
+
+      <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 15px;">
+        <button class="btn-outline" onclick="switchMainTab('ajustes')">⚙️ Ajustes</button>
+        <div id="admin-status" style="font-size: 0.75rem; text-align:center; color: var(--text-muted); margin: 5px 0;">Espectador</div>
+        <button class="action-btn" style="width:100%; background: #333;" onclick="toggleAdmin()">🔐 Creador</button>
+      </div>
+    </div>
+
+    <div id="main-content">
+      <header>
+        <h2 id="header-title">Cargando...</h2>
+        <span id="admin-badge" class="badge badge-risk" style="display:none;">MODO CREADOR</span>
+      </header>
+
+      <div class="content-area" id="dynamic-content">
+        </div>
+    </div>
+  </div>
+
+  <footer>&copy; 2026 FGH life. Todos los derechos reservados.</footer>
+
+  <script>
+    // PIN PRIVADO ACTUALIZADO
+    const ADMIN_PIN = "2012";
+    let isAdmin = false;
+
+    // BASE DE DATOS LOCAL
+    let db = JSON.parse(localStorage.getItem('fgh_db')) || {
+      users: [],
+      currentUser: null,
+      tutorialSeen: false,
+      competitions: [],
+      history: [],
+      announcements: [],
+      settings: { themeColor: '#ff6b00', bgDark: '#0f1216' }
+    };
+
+    let currentView = 'historia-global';
+    let activeComp = null;
+
+    function saveDB() {
+      localStorage.setItem('fgh_db', JSON.stringify(db));
+      applySettings();
+      renderSidebar();
+      renderContent();
+    }
+
+    function applySettings() {
+      document.documentElement.style.setProperty('--accent', db.settings.themeColor);
+      document.documentElement.style.setProperty('--bg-dark', db.settings.bgDark);
+    }
+
+    // --- INICIO Y TUTORIAL ---
+    window.onload = () => {
+      applySettings();
+      if (!db.currentUser) {
+        document.getElementById('login-modal').classList.add('active');
+      } else {
+        checkTutorial();
+      }
+    };
+
+    function login() {
+      const name = document.getElementById('login-username').value.trim();
+      if (!name) return;
+      
+      // Registrar al usuario y el momento en que se conectó (Logs para el creador)
+      const loginLog = `${name} (Último acceso: ${new Date().toLocaleString()})`;
+      
+      // Actualizamos o agregamos al usuario en la lista
+      const userIndex = db.users.findIndex(u => u.startsWith(name));
+      if (userIndex !== -1) {
+        db.users[userIndex] = loginLog;
+      } else {
+        db.users.push(loginLog);
+      }
+
+      db.currentUser = name;
+      document.getElementById('login-modal').classList.remove('active');
+      saveDB();
+      checkTutorial();
+    }
+
+    function checkTutorial() {
+      document.getElementById('current-user-display').innerText = db.currentUser;
+      if (!db.tutorialSeen) {
+        document.getElementById('tutorial-modal').classList.add('active');
+      }
+      renderSidebar();
+      renderContent();
+    }
+
+    function closeTutorial() {
+      db.tutorialSeen = true;
+      document.getElementById('tutorial-modal').classList.remove('active');
+      saveDB();
+    }
+
+    function toggleAdmin() {
+      if (isAdmin) {
+        isAdmin = false;
+        alert("Modo Creador desactivado.");
+      } else {
+        const pin = prompt("Ingresa el PIN de Creador:");
+        if (pin === ADMIN_PIN) {
+          isAdmin = true;
+          alert("Modo Creador Activado.");
+        } else {
+          alert("PIN incorrecto.");
+        }
+      }
+      document.body.classList.toggle('is-admin', isAdmin);
+      document.getElementById('admin-badge').style.display = isAdmin ? 'block' : 'none';
+      document.getElementById('admin-status').innerText = isAdmin ? "👑 Creador" : "👤 Espectador";
+      renderContent();
+    }
+
+    // --- NAVEGACIÓN LATERAL ---
+    function switchMainTab(id) {
+      currentView = id;
+      activeComp = db.competitions.find(c => c.id === id) || null;
+      renderSidebar();
+      renderContent();
+    }
+
+    function renderSidebar() {
+      const list = document.getElementById('comp-list');
+      list.innerHTML = '';
+      db.competitions.forEach(c => {
+        list.innerHTML += `<li class="nav-item ${currentView === c.id ? 'active' : ''}" onclick="switchMainTab(${c.id})">${c.name}</li>`;
+      });
+    }
+
+    // --- COMPETENCIAS (AHORA LIBRES PARA TODOS) ---
+    function openNewCompModal() { document.getElementById('new-comp-modal').classList.add('active'); }
+    
+    function saveNewCompetition() {
+      const name = document.getElementById('nc-name').value;
+      if(!name) return;
+      const newComp = {
+        id: Date.now(),
+        name,
+        creator: db.currentUser, // Guardamos quién la creó
+        mode: document.getElementById('nc-mode').value,
+        format: document.getElementById('nc-format').value,
+        leaders: document.getElementById('nc-leaders').value === 'Si',
+        participants: [],
+        challenges: []
+      };
+      db.competitions.push(newComp);
+      document.getElementById('new-comp-modal').classList.remove('active');
+      document.getElementById('nc-name').value = ''; // Limpiar input
+      switchMainTab(newComp.id);
+    }
+
+    function addParticipantToComp(compId) {
+      const name = prompt("Nombre del participante:");
+      if (!name) return;
+      const comp = db.competitions.find(c => c.id === compId);
+      comp.participants.push({ id: Date.now(), name, status: 'A salvo', votes: 0, elimOrder: null });
+      saveDB();
+    }
+
+    function setStatus(compId, partId, status) {
+      const comp = db.competitions.find(c => c.id === compId);
+      const p = comp.participants.find(x => x.id === partId);
+      p.status = status;
+      if (status === 'Eliminado') {
+        const votes = prompt(`¿Con cuántos votos fue eliminado ${p.name}?`, "0");
+        p.votes = parseInt(votes) || 0;
+        const elimCount = comp.participants.filter(x => x.elimOrder !== null).length;
+        p.elimOrder = elimCount + 1;
+      } else {
+        p.elimOrder = null; p.votes = 0;
+      }
+      saveDB();
+    }
+
+    function addChallengeToComp(compId) {
+      const title = prompt("Título del desafío:");
+      if (!title) return;
+      const isParts = confirm("¿Es un desafío por partes/tabla? (Aceptar=Sí, Cancelar=No)");
+      const comp = db.competitions.find(c => c.id === compId);
+      comp.challenges.push({ id: Date.now(), title, isParts, winner: 'Ninguno', bottomThird: '' });
+      saveDB();
+    }
+
+    // --- GLOBAL (HISTORIA / ANUNCIOS / AJUSTES) ---
+    function postGlobal(type) {
+      const text = prompt(`Escribe el nuevo ${type === 'historia' ? 'capítulo' : 'anuncio'}:`);
+      if(!text) return;
+      const item = { date: new Date().toLocaleDateString(), text };
+      if(type === 'historia') db.history.unshift(item);
+      else db.announcements.unshift(item);
+      saveDB();
+    }
+
+    function changeTheme() {
+      db.settings.themeColor = document.getElementById('theme-color').value;
+      db.settings.bgDark = document.getElementById('bg-color').value;
+      saveDB();
+    }
+
+    // --- RENDERIZADO PRINCIPAL ---
+    function renderContent() {
+      const area = document.getElementById('dynamic-content');
+      const title = document.getElementById('header-title');
+
+      if (currentView === 'historia-global') {
+        title.innerText = "📖 Historia Global Oficial";
+        // Botón solo visible para Admin
+        let html = isAdmin ? `<button class="action-btn creator-only" onclick="postGlobal('historia')" style="margin-bottom:20px;">+ Publicar Historia</button>` : '';
+        html += db.history.map(h => `<div class="card"><small style="color:var(--accent)">${h.date}</small><p>${h.text}</p></div>`).join('');
+        area.innerHTML = html || "<p>Aún no hay historias oficiales publicadas por el Creador.</p>";
+      } 
+      else if (currentView === 'anuncios-global') {
+        title.innerText = "📢 Anuncios Oficiales";
+        // Botón solo visible para Admin
+        let html = isAdmin ? `<button class="action-btn creator-only" onclick="postGlobal('anuncio')" style="margin-bottom:20px;">+ Nuevo Anuncio</button>` : '';
+        html += db.announcements.map(a => `<div class="card" style="border-left: 4px solid var(--accent)"><small style="color:var(--text-muted)">${a.date}</small><p>${a.text}</p></div>`).join('');
+        area.innerHTML = html || "<p>No hay anuncios oficiales por el momento.</p>";
+      }
+      else if (currentView === 'ajustes') {
+        title.innerText = "⚙️ Ajustes del Sistema";
+        area.innerHTML = `
+          <div class="card">
+            <h3>Personalización Visual</h3>
+            <label>Color de Acento (Botones, bordes)</label>
+            <input type="color" id="theme-color" value="${db.settings.themeColor}" style="height:50px;">
+            <label>Color de Fondo Base</label>
+            <input type="color" id="bg-color" value="${db.settings.bgDark}" style="height:50px;">
+            <button class="action-btn" onclick="changeTheme()">Guardar Colores</button>
+          </div>
+          ${isAdmin ? `
+          <div class="card creator-only">
+            <h3>Logs de Usuarios (Solo Creador)</h3>
+            <ul style="list-style:none; padding:0;">${db.users.map(u => `<li style="padding: 8px; background: #0d1117; margin-bottom: 5px; border-radius: 4px;">👤 ${u}</li>`).join('')}</ul>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">Aquí puedes ver quién ha iniciado sesión en este dispositivo.</p>
+          </div>` : ''}
+        `;
+      }
+      else if (activeComp) {
+        title.innerText = `🏆 ${activeComp.name} (${activeComp.mode} - ${activeComp.format})`;
+        
+        // PARTICIPANTES HTML (Todos pueden interactuar)
+        let pList = activeComp.participants.map(p => {
+          let bClass = p.status === 'A salvo' ? 'badge-safe' : (p.status === 'En riesgo' ? 'badge-risk' : 'badge-eliminated');
+          let actions = `
+            <div style="margin-top:10px; display:flex; gap:5px;">
+              <button onclick="setStatus(${activeComp.id}, ${p.id}, 'A salvo')">🛡️</button>
+              <button onclick="setStatus(${activeComp.id}, ${p.id}, 'En riesgo')">⚠️</button>
+              <button onclick="setStatus(${activeComp.id}, ${p.id}, 'Eliminado')">☠️</button>
+            </div>`;
+          return `<div style="background:#0d1117; padding:10px; margin-bottom:10px; border-radius:6px; border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between;"><b>${p.name}</b> <span class="badge ${bClass}">${p.status}</span></div>
+                    ${actions}
+                  </div>`;
+        }).join('');
+
+        // ELIMINADOS HTML
+        let elimList = activeComp.participants.filter(p => p.status === 'Eliminado').sort((a,b)=>a.elimOrder - b.elimOrder).map(p => 
+          `<li style="margin-bottom:8px;"><b>${p.elimOrder}º:</b> ${p.name} <span style="color:var(--text-muted); font-size:0.8rem;">(${p.votes} votos)</span></li>`
+        ).join('');
+
+        // DESAFÍOS HTML
+        let cList = activeComp.challenges.map(c => `
+          <div style="background:#0d1117; padding:10px; margin-bottom:10px; border-radius:6px; border-left:3px solid var(--safe);">
+            <b>${c.title}</b> ${c.isParts ? '<span class="badge badge-risk">POR PARTES</span>' : ''}
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">Ganador: ${c.winner} | Peligro: ${c.bottomThird || 'N/A'}</p>
+          </div>
+        `).join('');
+
+        area.innerHTML = `
+          <div style="margin-bottom:20px; font-size:0.9rem; color:var(--text-muted);">
+            Creada por: <b>${activeComp.creator || 'Desconocido'}</b> | Líderes permitidos (${activeComp.leaders ? 'Sí' : 'No'})
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>👥 Participantes</h3>
+              <button class="action-btn" onclick="addParticipantToComp(${activeComp.id})" style="margin-bottom:10px; width:100%;">+ Agregar Participante</button>
+              ${pList || '<p>No hay participantes aún.</p>'}
+            </div>
+            
+            <div class="card">
+              <h3>🎯 Desafíos / Retos</h3>
+              <button class="action-btn" onclick="addChallengeToComp(${activeComp.id})" style="margin-bottom:10px; width:100%;">+ Crear Desafío</button>
+              ${cList || '<p>No hay desafíos registrados.</p>'}
+            </div>
+
+            <div class="card">
+              <h3>💀 Orden de Eliminación</h3>
+              <ol style="padding-left:20px;">${elimList || '<p>Nadie ha sido eliminado.</p>'}</ol>
+            </div>
+          </div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>
