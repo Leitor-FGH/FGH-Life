@@ -1,358 +1,689 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Competencia</title>
-    <style>
-        /* Diseño base oscuro y moderno */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e24;
-            color: #ffffff;
-            margin: 0;
-            padding: 20px;
-        }
-        h1, h2, h3 { color: #fca311; }
-        .panel {
-            background-color: #2b2b36;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        button {
-            background-color: #fca311;
-            color: #14213d;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        button:hover { background-color: #e59400; }
-        input[type="text"], input[type="number"], select {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0 15px 0;
-            border-radius: 5px;
-            border: 1px solid #555;
-            background-color: #3f3f4e;
-            color: white;
-            box-sizing: border-box;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #555;
-            padding: 10px;
-            text-align: center;
-        }
-        th { background-color: #14213d; color: #fca311; }
-        .caja-votacion {
-            background-color: #3f3f4e;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            border-left: 5px solid #fca311;
-        }
-        .alerta { color: #ff4d4d; font-weight: bold; }
-        .final-panel {
-            background: linear-gradient(135deg, #fca311, #e59400);
-            color: #14213d;
-            text-align: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FGH life - Manager de Competencias</title>
+  <style>
+    :root {
+      --bg-dark: #0f1216;
+      --bg-card: #181e24;
+      --bg-sidebar: #13171c;
+      --accent: #ff6b00;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --border: #30363d;
+      --safe: #2ecc71;
+      --risk: #f1c40f;
+      --eliminated: #e74c3c;
+      --gold: #f39c12;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    .app-container { display: flex; flex: 1; overflow: hidden; }
+    
+    #sidebar {
+      width: 280px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 15px; overflow-y: auto;
+    }
+    .brand { font-size: 1.5rem; font-weight: bold; color: var(--accent); margin-bottom: 20px; text-align: center; }
+    .menu-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin: 15px 0 8px 0; font-weight: bold; }
+    .nav-list { list-style: none; margin-bottom: 10px; }
+    .nav-item {
+      padding: 10px; border-radius: 6px; cursor: pointer; margin-bottom: 5px;
+      display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
+    }
+    .nav-item:hover, .nav-item.active { background: var(--bg-card); border-left: 3px solid var(--accent); }
+
+    .btn-new { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 10px; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 5px; }
+
+    #main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+    header { background: var(--bg-card); padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .content-area { padding: 25px; flex: 1; overflow-y: auto; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .card h3 { color: var(--accent); margin-bottom: 15px; font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    
+    input, select, textarea { width: 100%; padding: 10px; background: #0d1117; border: 1px solid var(--border); color: var(--text); border-radius: 6px; margin-bottom: 10px; }
+    button.action-btn { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 550px; border: 1px solid var(--accent); max-height: 90vh; overflow-y: auto; }
+    .modal.active, .modal-overlay.active { display: flex; }
+
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+    .badge-safe { background: var(--safe); color: black; }
+    .badge-risk { background: var(--risk); color: black; }
+    .badge-eliminated { background: var(--eliminated); color: white; }
+    .badge-gold { background: var(--gold); color: black; }
+
+    .final-banner {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: black; font-weight: bold; text-align: center; padding: 15px;
+      border-radius: 8px; font-size: 1.3rem; margin-bottom: 20px;
+      box-shadow: 0 0 15px rgba(243, 156, 18, 0.4);
+    }
+
+    .vote-log-item { background: #0d1117; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; border-left: 3px solid var(--accent); font-size: 0.85rem; }
+
+    footer { text-align: center; padding: 12px; background: var(--bg-sidebar); border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-muted); }
+    .creator-only { display: none; }
+    body.is-admin .creator-only { display: block; }
+  </style>
 </head>
 <body>
 
-    <h1>🏆 Simulador de Competencia</h1>
+  <!-- MODAL DE LOGIN ACTUALIZADO -->
+  <div class="modal-overlay" id="login-modal">
+    <div class="modal" style="flex-direction: column;">
+      <h2 style="color: var(--accent); margin-bottom: 15px; text-align: center;">Bienvenido a FGH life</h2>
+      <p style="margin-bottom: 15px; text-align: center; color: var(--text-muted);">Inicia sesión para comenzar</p>
+      
+      <input type="text" id="login-username" placeholder="Tu correo electrónico o usuario...">
+      <button class="action-btn" onclick="login()" style="width: 100%; margin-bottom: 15px;">Siguiente</button>
+      
+      <div style="text-align: center; color: var(--text-muted); margin-bottom: 15px; font-size: 0.85rem;">O INGRESA CON</div>
+      
+      <button class="action-btn" onclick="loginGoogle()" style="width: 100%; background: white; color: black; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continuar con Google
+      </button>
+    </div>
+  </div>
 
-    <!-- 1. LOGIN (ARREGLADO BOTONES) -->
-    <div class="panel" id="panel-login">
-        <h2>Inicio de Sesión</h2>
-        <button onclick="continuarConGoogle(event)">Continuar con Google</button>
-        <button onclick="siguientePasoLogin(event)">Siguiente</button>
-        <p id="msg-login" class="alerta"></p>
+  <!-- MODAL DE VOTACIÓN CON LISTAS DESPLEGABLES -->
+  <div class="modal-overlay" id="vote-modal">
+    <div class="modal" style="flex-direction: column;">
+      <h2 id="vote-modal-title" style="color: var(--accent); margin-bottom: 15px;">Registrar Voto</h2>
+      <input type="hidden" id="current-vote-type">
+      
+      <label class="menu-label">¿Quién está votando?</label>
+      <select id="vote-voter-select"></select>
+
+      <label class="menu-label" id="vote-target-label">Vota a:</label>
+      <select id="vote-target-select"></select>
+
+      <div id="vote-target2-container" style="display:none;">
+        <label class="menu-label">Vota a (1 Punto):</label>
+        <select id="vote-target2-select"></select>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="action-btn" onclick="submitVote()" style="flex: 1;">Registrar Voto</button>
+        <button class="btn-outline" onclick="closeVoteModal()" style="flex: 1;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="tutorial-modal">
+    <div class="modal" style="flex-direction: column;">
+      <h2 style="color: var(--accent); margin-bottom: 15px;">📖 Tutorial de Usuario</h2>
+      <p style="margin-bottom: 10px; font-size: 0.9rem;">1. <b>Crear Competencias:</b> Elige el modo, formato, cantidad de finalistas y si hay líderes.</p>
+      <p style="margin-bottom: 10px; font-size: 0.9rem;">2. <b>Votación y Registro:</b> Usa listas desplegables para registrar los votos fácilmente.</p>
+      <p style="margin-bottom: 10px; font-size: 0.9rem;">3. <b>Gran Final:</b> El sistema detectará automáticamente cuando llegues al top y te permitirá votar por el ganador.</p>
+      <button class="action-btn" onclick="closeTutorial()">¡Entendido!</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="new-comp-modal">
+    <div class="modal" style="flex-direction: column;">
+      <h2 style="color: var(--accent); margin-bottom: 15px;">Nueva Competencia</h2>
+      <input type="text" id="nc-name" placeholder="Nombre de la competencia">
+      
+      <label class="menu-label">Modo de Juego</label>
+      <select id="nc-mode">
+        <option value="Normal">Normal (Desafío, voto, eliminación)</option>
+        <option value="Carrera">Carrera (Último en desafío es eliminado)</option>
+        <option value="Estilo GH">Estilo GH (Nominación 2 y 1 voto, voto, eliminación)</option>
+        <option value="Estilo Lghej">Estilo Lghej (Desafío, reto voto doble, eliminación)</option>
+      </select>
+
+      <label class="menu-label">Formato</label>
+      <select id="nc-format">
+        <option value="Solitario">Solitario</option>
+        <option value="Duos">Dúos</option>
+        <option value="Equipos">Equipos (Drama Total)</option>
+      </select>
+
+      <label class="menu-label">Cantidad de Finalistas</label>
+      <select id="nc-finalists">
+        <option value="2">2 Finalistas</option>
+        <option value="3" selected>3 Finalistas</option>
+        <option value="4">4 Finalistas</option>
+      </select>
+
+      <label class="menu-label">¿Líderes habilitados?</label>
+      <select id="nc-leaders">
+        <option value="No">No hay líderes</option>
+        <option value="Si">Sí (Salvan/Ponen en peligro)</option>
+      </select>
+
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button class="action-btn" onclick="saveNewCompetition()" style="flex: 1;">Crear</button>
+        <button class="btn-outline" onclick="document.getElementById('new-comp-modal').classList.remove('active')" style="flex: 1;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <div id="sidebar">
+      <div class="brand">🔥 FGH life</div>
+      
+      <div style="font-size: 0.85rem; margin-bottom: 15px; color: var(--text-muted); text-align: center;">
+        👤 <span id="current-user-display">Invitado</span>
+      </div>
+
+      <button class="btn-new" onclick="openNewCompModal()">+ Crear Competencia</button>
+
+      <label class="menu-label">Mis Competencias</label>
+      <ul class="nav-list" id="comp-list"></ul>
+
+      <label class="menu-label">Secciones Oficiales</label>
+      <ul class="nav-list">
+        <li class="nav-item" onclick="switchMainTab('historia-global')">📖 Historia</li>
+        <li class="nav-item" onclick="switchMainTab('anuncios-global')">📢 Anuncios</li>
+      </ul>
+
+      <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 15px;">
+        <button class="btn-outline" onclick="switchMainTab('ajustes')">⚙️ Ajustes</button>
+        <div id="admin-status" style="font-size: 0.75rem; text-align:center; color: var(--text-muted); margin: 5px 0;">Espectador</div>
+        <button class="action-btn" style="width:100%; background: #222;" onclick="toggleAdmin()">🔐 Modo Creador</button>
+      </div>
     </div>
 
-    <!-- 2. REGISTRO, EQUIPOS Y LÍDERES -->
-    <div class="panel" id="panel-registro" style="display:none;">
-        <h2>Registro de Participantes</h2>
-        <input type="text" id="nombre-jugador" placeholder="Nombre del jugador">
-        <select id="tipo-jugador">
-            <option value="normal">Jugador Normal (En Peligro)</option>
-            <option value="lider">Líder (Inmune)</option>
-        </select>
-        <input type="text" id="equipo-jugador" placeholder="Nombre del Equipo o Dúo (Opcional)">
-        <button onclick="agregarJugador()">Registrar Jugador</button>
+    <div id="main-content">
+      <header>
+        <h2 id="header-title">FGH life</h2>
+        <span id="admin-badge" class="badge badge-risk" style="display:none;">MODO CREADOR</span>
+      </header>
 
-        <h3>Participantes Actuales:</h3>
-        <table id="tabla-participantes">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Equipo/Dúo</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody id="lista-participantes"></tbody>
-        </table>
-        <button onclick="irADesafios()">Pasar a Desafíos</button>
+      <div class="content-area" id="dynamic-content"></div>
     </div>
+  </div>
 
-    <!-- 3. DESAFÍOS POR PARTES Y TABLA DE PUNTOS -->
-    <div class="panel" id="panel-desafios" style="display:none;">
-        <h2>Desafíos y Puntos</h2>
+  <footer>&copy; 2026 FGH life. Todos los derechos reservados.</footer>
+
+  <script>
+    const ADMIN_PIN = "2012";
+    let isAdmin = false;
+
+    let db = JSON.parse(localStorage.getItem('fgh_db')) || {
+      users: [],
+      currentUser: null,
+      tutorialSeen: false,
+      competitions: [],
+      history: [],
+      announcements: [],
+      settings: { themeColor: '#ff6b00', bgDark: '#0f1216' }
+    };
+
+    let currentView = 'historia-global';
+    let activeComp = null;
+
+    function saveDB() {
+      localStorage.setItem('fgh_db', JSON.stringify(db));
+      applySettings();
+      renderSidebar();
+      renderContent();
+    }
+
+    function applySettings() {
+      document.documentElement.style.setProperty('--accent', db.settings.themeColor);
+      document.documentElement.style.setProperty('--bg-dark', db.settings.bgDark);
+    }
+
+    window.onload = () => {
+      applySettings();
+      if (!db.currentUser) {
+        document.getElementById('login-modal').classList.add('active');
+      } else {
+        checkTutorial();
+      }
+    };
+
+    function login() {
+      const name = document.getElementById('login-username').value.trim();
+      if (!name) return alert("Por favor ingresa un usuario");
+      processLogin(name);
+    }
+
+    function loginGoogle() {
+      // Simulación de Auth Google
+      const mockEmail = prompt("Ingresa tu correo de Google (Simulación):", "usuario@gmail.com");
+      if(mockEmail) processLogin(mockEmail);
+    }
+
+    function processLogin(name) {
+      const loginLog = `${name} (${new Date().toLocaleString()})`;
+      if (!db.users.includes(loginLog)) db.users.push(loginLog);
+      db.currentUser = name;
+      document.getElementById('login-modal').classList.remove('active');
+      saveDB();
+      checkTutorial();
+    }
+
+    function checkTutorial() {
+      document.getElementById('current-user-display').innerText = db.currentUser;
+      if (!db.tutorialSeen) {
+        document.getElementById('tutorial-modal').classList.add('active');
+      }
+      renderSidebar();
+      renderContent();
+    }
+
+    function closeTutorial() {
+      db.tutorialSeen = true;
+      document.getElementById('tutorial-modal').classList.remove('active');
+      saveDB();
+    }
+
+    function toggleAdmin() {
+      if (isAdmin) {
+        isAdmin = false;
+        alert("Modo Creador desactivado.");
+      } else {
+        const pin = prompt("Ingresa el PIN de Creador:");
+        if (pin === ADMIN_PIN) {
+          isAdmin = true;
+          alert("Modo Creador Activado.");
+        } else {
+          alert("PIN incorrecto.");
+        }
+      }
+      document.body.classList.toggle('is-admin', isAdmin);
+      document.getElementById('admin-badge').style.display = isAdmin ? 'block' : 'none';
+      document.getElementById('admin-status').innerText = isAdmin ? "👑 Creador" : "👤 Espectador";
+      renderContent();
+    }
+
+    function switchMainTab(id) {
+      currentView = id;
+      activeComp = db.competitions.find(c => c.id === id) || null;
+      renderSidebar();
+      renderContent();
+    }
+
+    function renderSidebar() {
+      const list = document.getElementById('comp-list');
+      list.innerHTML = '';
+      db.competitions.forEach(c => {
+        list.innerHTML += `<li class="nav-item ${currentView === c.id ? 'active' : ''}" onclick="switchMainTab(${c.id})">${c.name}</li>`;
+      });
+    }
+
+    function openNewCompModal() { document.getElementById('new-comp-modal').classList.add('active'); }
+
+    function saveNewCompetition() {
+      const name = document.getElementById('nc-name').value.trim();
+      if(!name) return;
+      const newComp = {
+        id: Date.now(),
+        name,
+        creator: db.currentUser,
+        mode: document.getElementById('nc-mode').value,
+        format: document.getElementById('nc-format').value,
+        finalists: parseInt(document.getElementById('nc-finalists').value),
+        leaders: document.getElementById('nc-leaders').value === 'Si',
+        participants: [],
+        challenges: [],
+        votesLog: [],
+        retoWinnerId: null
+      };
+      db.competitions.push(newComp);
+      document.getElementById('new-comp-modal').classList.remove('active');
+      document.getElementById('nc-name').value = '';
+      switchMainTab(newComp.id);
+    }
+
+    // --- GENERADOR DE ID 3 DÍGITOS ---
+    function generateParticipantId(comp) {
+      let newId;
+      do {
+        newId = Math.floor(Math.random() * 900) + 100; // 100 al 999
+      } while (comp.participants.some(p => p.id === newId));
+      return newId;
+    }
+
+    function addParticipantToComp(compId) {
+      const name = prompt("Nombre del participante:");
+      if (!name) return;
+      const comp = db.competitions.find(c => c.id === compId);
+      const randomId = generateParticipantId(comp);
+      comp.participants.push({ id: randomId, name, status: 'A salvo', hasDoubleVote: false });
+      saveDB();
+    }
+
+    function deleteParticipant(compId, partId) {
+      if(!confirm("¿Seguro que quieres borrar este participante?")) return;
+      const comp = db.competitions.find(c => c.id === compId);
+      comp.participants = comp.participants.filter(p => p.id !== partId);
+      saveDB();
+    }
+
+    function setStatus(compId, partId, status) {
+      const comp = db.competitions.find(c => c.id === compId);
+      const p = comp.participants.find(x => x.id === partId);
+      p.status = status;
+      saveDB();
+    }
+
+    // --- SISTEMA DE VOTACIÓN CON LISTAS DESPLEGABLES ---
+    function openVoteModal(compId, type) {
+      const comp = db.competitions.find(c => c.id === compId);
+      const activeParts = comp.participants.filter(p => p.status !== 'Eliminado');
+      const nominees = comp.participants.filter(p => p.status === 'En riesgo');
+
+      if (activeParts.length === 0) return alert("No hay participantes activos.");
+      
+      const voterSelect = document.getElementById('vote-voter-select');
+      const targetSelect = document.getElementById('vote-target-select');
+      const target2Select = document.getElementById('vote-target2-select');
+      const target2Container = document.getElementById('vote-target2-container');
+      const modalTitle = document.getElementById('vote-modal-title');
+      const targetLabel = document.getElementById('vote-target-label');
+
+      document.getElementById('current-vote-type').value = type;
+
+      // Llenar votantes
+      voterSelect.innerHTML = activeParts.map(p => `<option value="${p.id}">#${p.id} - ${p.name}</option>`).join('');
+
+      if (type === 'GH_NOMINATION') {
+        modalTitle.innerText = "Nominación (2 y 1 Puntos)";
+        targetLabel.innerText = "Recibe 2 Puntos:";
+        targetSelect.innerHTML = activeParts.map(p => `<option value="${p.id}">#${p.id} - ${p.name}</option>`).join('');
         
-        <div style="margin-bottom: 20px; border-bottom: 1px solid #555; padding-bottom: 15px;">
-            <h3>Configurar Partes del Desafío</h3>
-            <div id="partes-desafio-container"></div>
-            <button onclick="agregarParteDesafio()">+ Añadir Parte al Desafío</button>
-        </div>
+        target2Container.style.display = 'block';
+        target2Select.innerHTML = activeParts.map(p => `<option value="${p.id}">#${p.id} - ${p.name}</option>`).join('');
+      } 
+      else if (type === 'ELIMINATION') {
+        if (nominees.length === 0) return alert("No hay nadie 'En riesgo' para eliminar.");
+        modalTitle.innerText = "Voto de Eliminación";
+        targetLabel.innerText = "¿A quién vota para eliminar?";
+        target2Container.style.display = 'none';
+        targetSelect.innerHTML = nominees.map(p => `<option value="${p.id}">#${p.id} - ${p.name}</option>`).join('');
+      }
+      else if (type === 'FINAL') {
+        modalTitle.innerText = "Votación Gran Final";
+        targetLabel.innerText = "Vota para que GANE:";
+        target2Container.style.display = 'none';
+        targetSelect.innerHTML = activeParts.map(p => `<option value="${p.id}">#${p.id} - ${p.name}</option>`).join('');
+      }
 
-        <h3>Tabla de Puntuaciones y Premios</h3>
-        <table id="tabla-puntos">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Jugador</th>
-                    <th>Puntos Obt.</th>
-                    <th>Premio / Recompensa del Reto</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpo-tabla-puntos"></tbody>
-        </table>
-        <button onclick="irAVotacion()">Terminar Reto y Pasar a Votación</button>
-    </div>
+      document.getElementById('vote-modal').classList.add('active');
+    }
 
-    <!-- 4. SISTEMA DE VOTACIÓN (ESTILO IMAGEN) -->
-    <div class="panel" id="panel-votacion" style="display:none;">
-        <h2>Gala de Eliminación</h2>
-        <p>Los líderes tienen inmunidad. Elige a quién vota cada participante:</p>
-        <div id="contenedor-votaciones"></div>
-        <button onclick="procesarVotacion()">Confirmar Votos y Eliminar</button>
-    </div>
+    function closeVoteModal() {
+      document.getElementById('vote-modal').classList.remove('active');
+    }
 
-    <!-- 5. LA GRAN FINAL -->
-    <div class="panel final-panel" id="panel-final" style="display:none;">
-        <h2>👑 ¡LA GRAN FINAL! 👑</h2>
-        <p>Solo quedan los mejores. ¡Es hora del desafío definitivo o la votación del jurado final!</p>
-        <div id="finalistas-container"></div>
-        <button onclick="reiniciarJuego()" style="background-color: #14213d; color: white;">Reiniciar Simulador</button>
-    </div>
+    function submitVote() {
+      const type = document.getElementById('current-vote-type').value;
+      const voterId = parseInt(document.getElementById('vote-voter-select').value);
+      const targetId = parseInt(document.getElementById('vote-target-select').value);
+      
+      const comp = activeComp;
+      const voter = comp.participants.find(p => p.id === voterId);
+      const target = comp.participants.find(p => p.id === targetId);
 
-    <script>
-        // --- BASE DE DATOS LOCAL ---
-        let jugadores = [];
-        let numPartesDesafio = 0;
+      if (voterId === targetId) return alert("Un participante no puede votarse a sí mismo (Revisa la primera opción).");
 
-        // --- 1. LOGIN ---
-        function continuarConGoogle(e) {
-            e.preventDefault(); // Evita recargar la página
-            document.getElementById("msg-login").innerText = "¡Conectado con Google exitosamente!";
-            setTimeout(() => siguientePasoLogin(e), 1000);
+      if (type === 'GH_NOMINATION') {
+        const target2Id = parseInt(document.getElementById('vote-target2-select').value);
+        if (voterId === target2Id) return alert("Un participante no puede votarse a sí mismo (Revisa la segunda opción).");
+        if (targetId === target2Id) return alert("No puedes darle 2 y 1 punto a la misma persona.");
+        
+        const target2 = comp.participants.find(p => p.id === target2Id);
+        comp.votesLog.push({ type: 'Nominación GH', voter: voter.name, details: `${target.name} (2 pts), ${target2.name} (1 pt)` });
+        alert(`Registrado: ${voter.name} dio 2 pts a ${target.name} y 1 pt a ${target2.name}.`);
+      } 
+      else if (type === 'ELIMINATION') {
+        let weight = voter.hasDoubleVote ? 2 : 1;
+        comp.votesLog.push({ type: 'Eliminación', voter: voter.name, target: target.name, targetId: target.id, weight });
+        alert(`Registrado: ${voter.name} votó a ${target.name} (${weight} voto/s).`);
+      }
+      else if (type === 'FINAL') {
+        let weight = voter.hasDoubleVote ? 2 : 1;
+        comp.votesLog.push({ type: 'Voto Final Positivo', voter: voter.name, target: target.name, targetId: target.id, weight });
+        alert(`Voto ganador: ${voter.name} votó por ${target.name} (${weight} voto/s).`);
+      }
+
+      saveDB();
+      closeVoteModal();
+    }
+
+    // --- DESAFÍOS ---
+    function addChallengeToComp(compId) {
+      const comp = db.competitions.find(c => c.id === compId);
+      const type = prompt("Tipo de Desafío:\n1. Normal\n2. Por Partes (3 a 5 mini desafíos)\n3. Por Tabla (10 mini desafíos)", "1");
+
+      const title = prompt("Título del Desafío:");
+      if (!title) return;
+
+      let challengeData = { id: Date.now(), title, type, winner: '', bottomThird: '', partsCount: 0, pointsTable: '' };
+
+      if (type === '2') {
+        let parts = parseInt(prompt("¿Cuántas partes tiene? (3, 4 o 5)", "3"));
+        challengeData.partsCount = Math.min(Math.max(parts, 3), 5);
+        challengeData.typeDesc = `Por partes (${challengeData.partsCount} mini desafíos)`;
+      } else if (type === '3') {
+        challengeData.typeDesc = "Por Tabla (10 mini desafíos con puntos)";
+        challengeData.pointsTable = prompt("Anota los puntos de la tabla (ej. 1º: 10pts, 2º: 8pts...)", "1º: 10, 2º: 8, 3º: 6");
+      } else {
+        challengeData.typeDesc = "Normal";
+      }
+
+      challengeData.winner = prompt("¿Quién ganó el desafío?", "Por definir");
+      challengeData.bottomThird = prompt("¿Quiénes quedaron en peligro/tercio inferior?", "Ninguno");
+
+      comp.challenges.push(challengeData);
+
+      if (comp.mode === 'Estilo Lghej') {
+        const retoWinnerName = prompt("¿Quién ganó el RETO (gana voto doble)?", challengeData.winner);
+        const winnerPart = comp.participants.find(p => p.name.toLowerCase() === (retoWinnerName||'').toLowerCase());
+        if (winnerPart) {
+          comp.participants.forEach(p => p.hasDoubleVote = false);
+          winnerPart.hasDoubleVote = true;
+          alert(`¡${winnerPart.name} ha ganado el Reto y tiene VOTO DOBLE!`);
         }
+      }
+      saveDB();
+    }
 
-        function siguientePasoLogin(e) {
-            e.preventDefault();
-            document.getElementById("panel-login").style.display = "none";
-            document.getElementById("panel-registro").style.display = "block";
+    function executeElimination(compId) {
+      const comp = db.competitions.find(c => c.id === compId);
+      const nominees = comp.participants.filter(p => p.status === 'En riesgo');
+      if (nominees.length === 0) return alert("Marca al menos a un participante 'En riesgo' antes de eliminar.");
+
+      let voteCounts = {};
+      nominees.forEach(n => voteCounts[n.name] = 0);
+
+      const elimVotes = comp.votesLog.filter(v => v.type === 'Eliminación');
+      elimVotes.forEach(v => {
+        if (voteCounts[v.target] !== undefined) {
+          voteCounts[v.target] += v.weight;
         }
+      });
 
-        // --- 2. REGISTRO Y LÍDERES (IDS DE 3 DÍGITOS) ---
-        function generarId() {
-            // Genera ID de exactamente 3 dígitos (100 a 999)
-            return Math.floor(100 + Math.random() * 900);
-        }
+      const elimName = prompt("Confirmación de ELIMINADO según votos registrados:\n" + nominees.map(n => `${n.name} (${voteCounts[n.name]||0} votos)`).join("\n") + "\n\nEscribe el nombre del eliminado:");
+      const elimPart = nominees.find(n => n.name.toLowerCase() === (elimName||'').toLowerCase());
 
-        function agregarJugador() {
-            const nombre = document.getElementById("nombre-jugador").value.trim();
-            const tipo = document.getElementById("tipo-jugador").value;
-            const equipo = document.getElementById("equipo-jugador").value.trim() || "Ninguno";
+      if (!elimPart) return;
 
-            if (!nombre) {
-                alert("Por favor, ingresa un nombre.");
-                return;
-            }
+      const totalInitial = comp.participants.length;
+      const alreadyEliminated = comp.participants.filter(p => p.status === 'Eliminado').length;
+      const rankPosition = totalInitial - alreadyEliminated;
 
-            const nuevoJugador = {
-                id: generarId(),
-                nombre: nombre,
-                equipo: equipo,
-                esLider: tipo === "lider",
-                puntos: 0,
-                premio: "",
-                eliminado: false
-            };
+      const votesReceived = voteCounts[elimPart.name] || 0;
+      const rivals = nominees.filter(n => n.id !== elimPart.id).map(n => `${n.name} (${voteCounts[n.name]||0}v)`).join(", ");
 
-            jugadores.push(nuevoJugador);
-            document.getElementById("nombre-jugador").value = "";
-            document.getElementById("equipo-jugador").value = "";
-            
-            actualizarTablas();
-            verificarFinal();
-        }
+      elimPart.status = 'Eliminado';
+      elimPart.elimData = {
+        rank: rankPosition,
+        votes: votesReceived,
+        against: rivals || "Sin rivales registrados"
+      };
 
-        function actualizarTablas() {
-            const activos = jugadores.filter(j => !j.eliminado);
-            
-            // Tabla de registro
-            const lista = document.getElementById("lista-participantes");
-            lista.innerHTML = activos.map(j => `
-                <tr>
-                    <td>#${j.id}</td>
-                    <td>${j.nombre}</td>
-                    <td>${j.equipo}</td>
-                    <td style="color: ${j.esLider ? '#fca311' : '#ff4d4d'}">${j.esLider ? '👑 Líder' : 'En Peligro'}</td>
-                </tr>
-            `).join("");
+      comp.participants.forEach(p => p.hasDoubleVote = false);
+      alert(`${elimPart.name} ha sido eliminado/a ocupando el puesto ${rankPosition}º.`);
+      saveDB();
+    }
 
-            // Tabla de puntos
-            const cuerpoPuntos = document.getElementById("cuerpo-tabla-puntos");
-            cuerpoPuntos.innerHTML = activos.map(j => `
-                <tr>
-                    <td>#${j.id}</td>
-                    <td>${j.nombre}</td>
-                    <td><input type="number" id="puntos-${j.id}" placeholder="0"></td>
-                    <td><input type="text" id="premio-${j.id}" placeholder="Ej: Voto Doble"></td>
-                </tr>
-            `).join("");
-        }
+    function postGlobal(type) {
+      const text = prompt(`Escribe el contenido oficial:`);
+      if(!text) return;
+      const item = { date: new Date().toLocaleDateString(), text };
+      if(type === 'historia') db.history.unshift(item);
+      else db.announcements.unshift(item);
+      saveDB();
+    }
 
-        // --- 3. DESAFÍOS POR PARTES ---
-        function agregarParteDesafio() {
-            numPartesDesafio++;
-            const container = document.getElementById("partes-desafio-container");
-            container.innerHTML += `
-                <input type="text" placeholder="Describe la Parte ${numPartesDesafio} del desafío (Ej: Armar el rompecabezas)">
-            `;
-        }
+    function changeTheme() {
+      db.settings.themeColor = document.getElementById('theme-color').value;
+      db.settings.bgDark = document.getElementById('bg-color').value;
+      saveDB();
+    }
 
-        function irADesafios() {
-            document.getElementById("panel-registro").style.display = "none";
-            document.getElementById("panel-desafios").style.display = "block";
-        }
+    function renderContent() {
+      const area = document.getElementById('dynamic-content');
+      const title = document.getElementById('header-title');
 
-        function irAVotacion() {
-            // Guardar puntos y premios antes de cambiar
-            jugadores.filter(j => !j.eliminado).forEach(j => {
-                j.puntos = document.getElementById(`puntos-${j.id}`).value;
-                j.premio = document.getElementById(`premio-${j.id}`).value;
-            });
+      if (currentView === 'historia-global') {
+        title.innerText = "📖 Historia Global Oficial";
+        let html = isAdmin ? `<button class="action-btn creator-only" onclick="postGlobal('historia')" style="margin-bottom:20px;">+ Publicar Historia Oficial</button>` : '';
+        html += db.history.map(h => `<div class="card"><small style="color:var(--accent)">${h.date}</small><p style="margin-top:8px;">${h.text}</p></div>`).join('');
+        area.innerHTML = html || "<p>No hay historias publicadas por el Creador.</p>";
+      } 
+      else if (currentView === 'anuncios-global') {
+        title.innerText = "📢 Anuncios Oficiales";
+        let html = isAdmin ? `<button class="action-btn creator-only" onclick="postGlobal('anuncio')" style="margin-bottom:20px;">+ Nuevo Anuncio Oficial</button>` : '';
+        html += db.announcements.map(a => `<div class="card" style="border-left: 4px solid var(--accent)"><small style="color:var(--text-muted)">${a.date}</small><p style="margin-top:8px;">${a.text}</p></div>`).join('');
+        area.innerHTML = html || "<p>No hay anuncios oficiales por el momento.</p>";
+      }
+      else if (currentView === 'ajustes') {
+        title.innerText = "⚙️ Ajustes del Sistema";
+        area.innerHTML = `
+          <div class="card">
+            <h3>Personalización Visual</h3>
+            <label>Color de Acento</label>
+            <input type="color" id="theme-color" value="${db.settings.themeColor}" style="height:50px;">
+            <label>Color Fondo de Pantalla</label>
+            <input type="color" id="bg-color" value="${db.settings.bgDark}" style="height:50px;">
+            <button class="action-btn" onclick="changeTheme()">Guardar Ajustes</button>
+          </div>
+          ${isAdmin ? `<div class="card creator-only"><h3>Logs de Usuarios</h3><ul>${db.users.map(u => `<li>👤 ${u}</li>`).join('')}</ul></div>` : ''}
+        `;
+      }
+      else if (activeComp) {
+        title.innerText = `🏆 ${activeComp.name} (${activeComp.mode})`;
 
-            document.getElementById("panel-desafios").style.display = "none";
-            document.getElementById("panel-votacion").style.display = "block";
-            generarCajasVotacion();
-        }
+        const activeParts = activeComp.participants.filter(p => p.status !== 'Eliminado');
+        const activeCount = activeParts.length;
+        const isFinal = activeCount > 0 && activeCount <= activeComp.finalists;
 
-        // --- 4. SISTEMA DE VOTACIÓN (COMO TU IMAGEN) ---
-        function generarCajasVotacion() {
-            const activos = jugadores.filter(j => !j.eliminado);
-            const enPeligro = activos.filter(j => !j.esLider); // Solo se puede votar a los que NO son líderes
-            const contenedor = document.getElementById("contenedor-votaciones");
-            
-            // Opciones del dropdown basadas en los que están en peligro
-            let opcionesHTML = `<option value="" disabled selected>Selecciona a quién vota...</option>`;
-            enPeligro.forEach(opcion => {
-                opcionesHTML += `<option value="${opcion.id}">${opcion.nombre} (#${opcion.id})</option>`;
-            });
-            opcionesHTML += `<option value="abstencion">No voto / Se abstuvo de votar</option>`; // Opción pedida
+        let finalBannerHTML = isFinal ? `<div class="final-banner">🏆 ¡GRAN FINAL ACTIVA! (${activeCount} Finalistas) 🏆</div>` : '';
 
-            contenedor.innerHTML = "";
-            activos.forEach(votante => {
-                contenedor.innerHTML += `
-                    <div class="caja-votacion">
-                        <strong>Voto de ${votante.nombre} ${votante.esLider ? '(👑 Líder)' : ''}:</strong>
-                        <select id="voto-de-${votante.id}">
-                            ${opcionesHTML}
-                        </select>
+        let pList = activeComp.participants.map(p => {
+          let bClass = p.status === 'A salvo' ? 'badge-safe' : (p.status === 'En riesgo' ? 'badge-risk' : 'badge-eliminated');
+          let doubleVoteBadge = p.hasDoubleVote ? `<span class="badge badge-gold" style="margin-left:5px;">⭐ VOTO DOBLE</span>` : '';
+          
+          return `<div style="background:#0d1117; padding:12px; margin-bottom:10px; border-radius:6px; border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <b><span style="color:var(--text-muted)">#${p.id}</span> ${p.name}</b> ${doubleVoteBadge}
+                      <span class="badge ${bClass}">${p.status}</span>
                     </div>
-                `;
-            });
-        }
-
-        function procesarVotacion() {
-            const activos = jugadores.filter(j => !j.eliminado);
-            let conteoVotos = {};
-            
-            // Inicializar conteo
-            activos.forEach(j => conteoVotos[j.id] = 0);
-
-            // Contar votos
-            activos.forEach(votante => {
-                const voto = document.getElementById(`voto-de-${votante.id}`).value;
-                if (voto !== "abstencion" && voto !== "") {
-                    conteoVotos[voto]++;
-                }
-            });
-
-            // Encontrar al más votado
-            let maxVotos = -1;
-            let eliminadoId = null;
-
-            for (const id in conteoVotos) {
-                if (conteoVotos[id] > maxVotos) {
-                    maxVotos = conteoVotos[id];
-                    eliminadoId = parseInt(id);
-                }
-            }
-
-            if (maxVotos > 0 && eliminadoId) {
-                const jugadorEliminado = jugadores.find(j => j.id === eliminadoId);
-                jugadorEliminado.eliminado = true;
-                alert(`¡${jugadorEliminado.nombre} ha sido eliminado con ${maxVotos} votos!`);
-            } else {
-                alert("Nadie fue eliminado (Todos se abstuvieron o hubo empate a 0).");
-            }
-
-            // Quitar liderazgos para la siguiente ronda
-            jugadores.forEach(j => j.esLider = false);
-
-            document.getElementById("panel-votacion").style.display = "none";
-            document.getElementById("panel-registro").style.display = "block";
-            
-            actualizarTablas();
-            verificarFinal();
-        }
-
-        // --- 5. LA GRAN FINAL ---
-        function verificarFinal() {
-            const activos = jugadores.filter(j => !j.eliminado);
-            
-            // Si quedan 3 o menos (y el juego ya empezó, es decir hay más de 0)
-            if (activos.length > 0 && activos.length <= 3 && jugadores.length > 3) {
-                // Ocultar todos los paneles normales
-                document.getElementById("panel-login").style.display = "none";
-                document.getElementById("panel-registro").style.display = "none";
-                document.getElementById("panel-desafios").style.display = "none";
-                document.getElementById("panel-votacion").style.display = "none";
-                
-                // Mostrar panel de la final
-                document.getElementById("panel-final").style.display = "block";
-                
-                const finalistasDiv = document.getElementById("finalistas-container");
-                finalistasDiv.innerHTML = activos.map(j => `
-                    <div style="background: rgba(255,255,255,0.2); margin: 10px; padding: 20px; border-radius: 10px;">
-                        <h3 style="color: #14213d; font-size: 24px;">${j.nombre} (#${j.id})</h3>
-                        <p><strong>Equipo:</strong> ${j.equipo}</p>
+                    <div style="margin-top:10px; display:flex; gap:5px;">
+                      <button onclick="setStatus(${activeComp.id}, ${p.id}, 'A salvo')" title="A salvo">🛡️</button>
+                      <button onclick="setStatus(${activeComp.id}, ${p.id}, 'En riesgo')" title="En riesgo">⚠️</button>
+                      <button onclick="deleteParticipant(${activeComp.id}, ${p.id})" style="background:#555; color:white; border:none; border-radius:4px; padding:2px 6px; margin-left:auto; cursor:pointer;">🗑️</button>
                     </div>
-                `).join("");
-            }
+                  </div>`;
+        }).join('');
+
+        let votesLogHTML = (activeComp.votesLog || []).map(v => 
+          `<div class="vote-log-item">
+            <b>${v.voter}</b> votó a <b>${v.target || v.details}</b> ${v.weight ? `(${v.weight} pts)` : ''} <small style="color:var(--text-muted)">[${v.type}]</small>
+           </div>`
+        ).join('');
+
+        let cList = activeComp.challenges.map(c => `
+          <div style="background:#0d1117; padding:12px; margin-bottom:10px; border-radius:6px; border-left:3px solid var(--accent);">
+            <b>${c.title}</b> <span class="badge badge-risk">${c.typeDesc || 'Normal'}</span>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:5px;">🥇 Ganador: <b>${c.winner}</b></p>
+            <p style="font-size:0.85rem; color:var(--risk);">⚠️ En Peligro: <b>${c.bottomThird}</b></p>
+            ${c.pointsTable ? `<p style="font-size:0.8rem; color:var(--gold); margin-top:3px;">📊 Tabla: ${c.pointsTable}</p>` : ''}
+          </div>
+        `).join('');
+
+        let elimList = activeComp.participants
+          .filter(p => p.status === 'Eliminado' && p.elimData)
+          .sort((a,b) => b.elimData.rank - a.elimData.rank)
+          .map(p => `
+            <div style="background:#0d1117; padding:10px; border-radius:6px; margin-bottom:8px; border-left:3px solid var(--eliminated);">
+              <b style="color:var(--eliminated);">${p.elimData.rank}º Puesto:</b> <b>${p.name}</b>
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-top:3px;">
+                ❌ Votos en contra: <b>${p.elimData.votes}</b><br>
+                ⚔️ Perdió contra: <b>${p.elimData.against}</b>
+              </div>
+            </div>
+          `).join('');
+
+        // LÓGICA DE BOTONES SEGÚN SI ES LA FINAL O NO
+        let voteButtonsHTML = '';
+        if (isFinal) {
+          voteButtonsHTML = `
+            <button class="action-btn" onclick="openVoteModal(${activeComp.id}, 'FINAL')" style="margin-bottom:15px; width:100%; background: var(--gold); color: black;">👑 Votar Ganador (Gran Final)</button>
+          `;
+        } else {
+          voteButtonsHTML = `
+            ${activeComp.mode === 'Estilo GH' ? `<button class="action-btn" onclick="openVoteModal(${activeComp.id}, 'GH_NOMINATION')" style="margin-bottom:8px; width:100%;">📝 Voto Nominación (2 y 1)</button>` : ''}
+            <button class="action-btn" onclick="openVoteModal(${activeComp.id}, 'ELIMINATION')" style="margin-bottom:8px; width:100%; background: #c0392b;">☠️ Registrar Voto Eliminación</button>
+            <button class="action-btn" onclick="executeElimination(${activeComp.id})" style="margin-bottom:15px; width:100%; background: #8e44ad;">⚡ Finalizar y Eliminar</button>
+          `;
         }
 
-        function reiniciarJuego() {
-            jugadores = [];
-            document.getElementById("panel-final").style.display = "none";
-            document.getElementById("panel-registro").style.display = "block";
-            actualizarTablas();
-        }
-    </script>
+        area.innerHTML = `
+          ${finalBannerHTML}
+          <div style="margin-bottom:20px; font-size:0.9rem; color:var(--text-muted); background: var(--bg-card); padding: 12px; border-radius: 6px;">
+            Creador: <b>${activeComp.creator}</b> | Modo: <b>${activeComp.mode}</b> | Finalistas: <b>${activeComp.finalists}</b> | Líderes: <b>${activeComp.leaders ? 'Sí' : 'No'}</b>
+          </div>
+
+          <div class="grid">
+            <div class="card">
+              <h3>👥 Participantes</h3>
+              <button class="action-btn" onclick="addParticipantToComp(${activeComp.id})" style="margin-bottom:10px; width:100%;">+ Agregar Participante</button>
+              ${pList || '<p>No hay participantes.</p>'}
+            </div>
+
+            <div class="card">
+              <h3>🗳️ Sistema de Votación</h3>
+              ${voteButtonsHTML}
+              <h4 style="font-size:0.9rem; color:var(--text-muted); margin-bottom:8px;">Registro de Votos:</h4>
+              <div style="max-height: 200px; overflow-y: auto;">${votesLogHTML || '<p style="font-size:0.8rem;">Sin votos registrados.</p>'}</div>
+            </div>
+
+            <div class="card">
+              <h3>🎯 Desafíos y Retos</h3>
+              <button class="action-btn" onclick="addChallengeToComp(${activeComp.id})" style="margin-bottom:15px; width:100%;">+ Crear Desafío</button>
+              ${cList || '<p>No hay desafíos.</p>'}
+            </div>
+
+            <div class="card">
+              <h3>💀 Orden de Eliminación</h3>
+              ${elimList || '<p>Nadie ha sido eliminado aún.</p>'}
+            </div>
+          </div>
+        `;
+      }
+    }
+  </script>
 </body>
 </html>
