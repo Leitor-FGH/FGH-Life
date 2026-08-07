@@ -51,8 +51,14 @@
     input, select, textarea { width: 100%; padding: 10px; background: #0d1117; border: 1px solid var(--border); color: var(--text); border-radius: 6px; margin-bottom: 10px; }
     button.action-btn { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
-    .modal { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 550px; border: 1px solid var(--accent); max-height: 90vh; overflow-y: auto; }
+    .btn-google {
+      background: #ffffff; color: #757575; border: 1px solid #dadce0; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px; border-radius: 6px; cursor: pointer; margin-bottom: 15px;
+    }
+    .btn-google:hover { background: #f8f9fa; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; border: 1px solid var(--accent); max-height: 90vh; overflow-y: auto; }
     .modal.active, .modal-overlay.active { display: flex; }
 
     .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
@@ -77,26 +83,50 @@
 </head>
 <body>
 
+  <!-- MODAL DE LOGIN / REGISTRO POR EMAIL Y GOOGLE -->
   <div class="modal-overlay" id="login-modal">
     <div class="modal" style="flex-direction: column;">
-      <h2 style="color: var(--accent); margin-bottom: 15px; text-align: center;">Bienvenido a FGH life</h2>
-      <p style="margin-bottom: 15px; text-align: center; color: var(--text-muted);">Inicia sesión para comenzar</p>
-      <input type="text" id="login-username" placeholder="Tu nombre de usuario...">
-      <button class="action-btn" onclick="login()">Entrar</button>
+      <h2 style="color: var(--accent); margin-bottom: 5px; text-align: center;">Bienvenido a FGH life</h2>
+      <p style="margin-bottom: 20px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">Inicia sesión con tu correo electrónico para cargar tus competencias</p>
+      
+      <!-- Botón de Google -->
+      <button class="btn-google" onclick="loginWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.74-.06-1.28-.19-1.84H9v3.34h4.96c-.1.83-.64 2.08-1.84 2.92l-.02.13 2.73 2.11.19.02c1.73-1.6 2.72-3.97 2.72-6.68z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.84-2.2c-.76.53-1.78.9-3.12.9-2.38 0-4.41-1.57-5.13-3.72l-.14.01-2.82 2.18-.04.13C2.39 15.93 5.43 18 9 18z"/><path fill="#FBBC05" d="M3.87 10.8c-.2-.58-.32-1.21-.32-1.8s.12-1.22.32-1.8l-.01-.14-2.83-2.2-.13.06C.32 6.13 0 7.52 0 9s.32 2.87.9 4.08l2.97-2.28z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.43 0 2.39 2.07.9 5.08l2.97 2.29c.72-2.15 2.75-3.79 5.13-3.79z"/></svg>
+        Continuar con Google
+      </button>
+
+      <div style="display: flex; align-items: center; margin-bottom: 15px;">
+        <hr style="flex: 1; border: none; border-top: 1px solid var(--border);">
+        <span style="padding: 0 10px; color: var(--text-muted); font-size: 0.8rem;">o usa tu correo</span>
+        <hr style="flex: 1; border: none; border-top: 1px solid var(--border);">
+      </div>
+
+      <!-- Formulario de Email -->
+      <label class="menu-label">Correo Electrónico</label>
+      <input type="email" id="login-email" placeholder="ejemplo@correo.com">
+
+      <div id="username-step" style="display: none;">
+        <label class="menu-label" style="color: var(--accent);">Nombre de Cuenta (Primera vez)</label>
+        <input type="text" id="login-username" placeholder="Crea tu nombre de usuario...">
+      </div>
+
+      <button class="action-btn" id="btn-submit-login" onclick="handleEmailStep()" style="width: 100%; margin-top: 10px;">Siguiente</button>
     </div>
   </div>
 
+  <!-- TUTORIAL -->
   <div class="modal-overlay" id="tutorial-modal">
     <div class="modal" style="flex-direction: column;">
       <h2 style="color: var(--accent); margin-bottom: 15px;">📖 Tutorial de Usuario</h2>
-      <p style="margin-bottom: 10px; font-size: 0.9rem;">1. <b>Crear Competencias:</b> Elige el modo (Normal, Carrera, GH, Lghej), el formato, la cantidad de finalistas y si hay líderes.</p>
-      <p style="margin-bottom: 10px; font-size: 0.9rem;">2. <b>Votación y Registro:</b> Puedes registrar detalladamente quién vota a quién en Nominaciones y Eliminaciones.</p>
-      <p style="margin-bottom: 10px; font-size: 0.9rem;">3. <b>Retos:</b> En el modo Lghej, ganar un Reto otorga <b>Voto Doble</b> en la siguiente votación.</p>
-      <p style="margin-bottom: 15px; font-size: 0.9rem;">4. <b>Orden de Eliminación:</b> Calcula los puestos inversos (ej. 5º lugar) e indica contra quiénes perdió y con cuántos votos.</p>
+      <p style="margin-bottom: 10px; font-size: 0.9rem;">1. <b>Crear Competencias:</b> Elige el modo (Normal, Carrera, GH, Lghej), formato, finalistas y líderes.</p>
+      <p style="margin-bottom: 10px; font-size: 0.9rem;">2. <b>Votación y Registro:</b> Registra detalladamente quién vota a quién.</p>
+      <p style="margin-bottom: 10px; font-size: 0.9rem;">3. <b>Retos:</b> En modo Lghej, ganar un Reto otorga <b>Voto Doble</b>.</p>
+      <p style="margin-bottom: 15px; font-size: 0.9rem;">4. <b>Persistencia por Cuenta:</b> Tus competencias se guardan en tu correo ingresado.</p>
       <button class="action-btn" onclick="closeTutorial()">¡Entendido!</button>
     </div>
   </div>
 
+  <!-- CREAR COMPETENCIA -->
   <div class="modal-overlay" id="new-comp-modal">
     <div class="modal" style="flex-direction: column;">
       <h2 style="color: var(--accent); margin-bottom: 15px;">Nueva Competencia</h2>
@@ -141,8 +171,11 @@
     <div id="sidebar">
       <div class="brand">🔥 FGH life</div>
       
-      <div style="font-size: 0.85rem; margin-bottom: 15px; color: var(--text-muted); text-align: center;">
+      <div style="font-size: 0.85rem; margin-bottom: 5px; color: var(--text); text-align: center; font-weight: bold;">
         👤 <span id="current-user-display">Invitado</span>
+      </div>
+      <div style="font-size: 0.75rem; margin-bottom: 15px; color: var(--text-muted); text-align: center;" id="current-email-display">
+        -
       </div>
 
       <button class="btn-new" onclick="openNewCompModal()">+ Crear Competencia</button>
@@ -158,6 +191,7 @@
 
       <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 15px;">
         <button class="btn-outline" onclick="switchMainTab('ajustes')">⚙️ Ajustes</button>
+        <button class="btn-outline" onclick="logout()" style="color: #e74c3c; border-color: #e74c3c;">🚪 Cerrar Sesión</button>
         <div id="admin-status" style="font-size: 0.75rem; text-align:center; color: var(--text-muted); margin: 5px 0;">Espectador</div>
         <button class="action-btn" style="width:100%; background: #222;" onclick="toggleAdmin()">🔐 Modo Creador</button>
       </div>
@@ -179,13 +213,13 @@
     const ADMIN_PIN = "2012";
     let isAdmin = false;
 
+    // Estructura de base de datos dividida por Cuentas (Email)
     let db = JSON.parse(localStorage.getItem('fgh_db')) || {
-      users: [],
-      currentUser: null,
-      tutorialSeen: false,
-      competitions: [],
+      accounts: {}, // { "mail@ejemplo.com": { name: "Usuario", competitions: [], tutorialSeen: false } }
+      currentEmail: null,
       history: [],
       announcements: [],
+      usersLog: [],
       settings: { themeColor: '#ff6b00', bgDark: '#0f1216' }
     };
 
@@ -206,27 +240,92 @@
 
     window.onload = () => {
       applySettings();
-      if (!db.currentUser) {
+      if (!db.currentEmail || !db.accounts[db.currentEmail]) {
         document.getElementById('login-modal').classList.add('active');
       } else {
         checkTutorial();
       }
     };
 
-    function login() {
-      const name = document.getElementById('login-username').value.trim();
-      if (!name) return;
-      const loginLog = `${name} (${new Date().toLocaleString()})`;
-      if (!db.users.includes(loginLog)) db.users.push(loginLog);
-      db.currentUser = name;
+    // --- MANEJO DE AUTENTICACIÓN POR EMAIL Y GOOGLE ---
+    function handleEmailStep() {
+      const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
+      if (!emailInput || !emailInput.includes('@')) {
+        alert("Por favor, ingresa un correo electrónico válido.");
+        return;
+      }
+
+      const accountExists = !!db.accounts[emailInput];
+      const usernameStep = document.getElementById('username-step');
+
+      if (!accountExists && usernameStep.style.display === 'none') {
+        // Si no existe la cuenta, mostramos el campo para ingresar el nombre de usuario
+        usernameStep.style.display = 'block';
+        document.getElementById('login-email').disabled = true;
+        document.getElementById('btn-submit-login').innerText = "Crear Cuenta y Entrar";
+        return;
+      }
+
+      let username = "";
+      if (!accountExists) {
+        username = document.getElementById('login-username').value.trim();
+        if (!username) {
+          alert("Por favor ingresa un nombre para tu cuenta.");
+          return;
+        }
+      } else {
+        username = db.accounts[emailInput].name;
+      }
+
+      completeLogin(emailInput, username);
+    }
+
+    function loginWithGoogle() {
+      const googleEmail = prompt("Simulación Google Auth:\nIngresa tu correo de Google:", "usuario@gmail.com");
+      if (!googleEmail || !googleEmail.includes('@')) return;
+
+      const email = googleEmail.trim().toLowerCase();
+      let username = db.accounts[email] ? db.accounts[email].name : prompt("Nombre de usuario para tu cuenta de Google:", email.split('@')[0]);
+
+      if (!username) username = email.split('@')[0];
+      completeLogin(email, username);
+    }
+
+    function completeLogin(email, username) {
+      if (!db.accounts[email]) {
+        db.accounts[email] = {
+          name: username,
+          competitions: [],
+          tutorialSeen: false
+        };
+      }
+
+      db.currentEmail = email;
+      const logEntry = `${username} (${email}) - ${new Date().toLocaleString()}`;
+      if (!db.usersLog) db.usersLog = [];
+      db.usersLog.push(logEntry);
+
       document.getElementById('login-modal').classList.remove('active');
       saveDB();
       checkTutorial();
     }
 
+    function logout() {
+      if (confirm("¿Deseas cerrar sesión? Se guardará el progreso de tus competencias.")) {
+        db.currentEmail = null;
+        saveDB();
+        location.reload();
+      }
+    }
+
     function checkTutorial() {
-      document.getElementById('current-user-display').innerText = db.currentUser;
-      if (!db.tutorialSeen) {
+      const account = db.accounts[db.currentEmail];
+      if (!account) return;
+
+      document.getElementById('current-user-display').innerText = account.name;
+      document.getElementById('current-email-display').innerText = db.currentEmail;
+
+      if (!account.tutorialSeen) {
         document.getElementById('tutorial-modal').classList.add('active');
       }
       renderSidebar();
@@ -234,7 +333,9 @@
     }
 
     function closeTutorial() {
-      db.tutorialSeen = true;
+      if (db.accounts[db.currentEmail]) {
+        db.accounts[db.currentEmail].tutorialSeen = true;
+      }
       document.getElementById('tutorial-modal').classList.remove('active');
       saveDB();
     }
@@ -260,7 +361,8 @@
 
     function switchMainTab(id) {
       currentView = id;
-      activeComp = db.competitions.find(c => c.id === id) || null;
+      const account = db.accounts[db.currentEmail];
+      activeComp = (account && account.competitions) ? account.competitions.find(c => c.id === id) || null : null;
       renderSidebar();
       renderContent();
     }
@@ -268,30 +370,36 @@
     function renderSidebar() {
       const list = document.getElementById('comp-list');
       list.innerHTML = '';
-      db.competitions.forEach(c => {
-        list.innerHTML += `<li class="nav-item ${currentView === c.id ? 'active' : ''}" onclick="switchMainTab(${c.id})">${c.name}</li>`;
-      });
+
+      const account = db.accounts[db.currentEmail];
+      if (account && account.competitions) {
+        account.competitions.forEach(c => {
+          list.innerHTML += `<li class="nav-item ${currentView === c.id ? 'active' : ''}" onclick="switchMainTab(${c.id})">${c.name}</li>`;
+        });
+      }
     }
 
     function openNewCompModal() { document.getElementById('new-comp-modal').classList.add('active'); }
 
     function saveNewCompetition() {
       const name = document.getElementById('nc-name').value.trim();
-      if(!name) return;
+      if (!name) return;
+
+      const account = db.accounts[db.currentEmail];
       const newComp = {
         id: Date.now(),
         name,
-        creator: db.currentUser,
+        creator: account.name,
         mode: document.getElementById('nc-mode').value,
         format: document.getElementById('nc-format').value,
         finalists: parseInt(document.getElementById('nc-finalists').value),
         leaders: document.getElementById('nc-leaders').value === 'Si',
         participants: [],
         challenges: [],
-        votesLog: [],
-        retoWinnerId: null
+        votesLog: []
       };
-      db.competitions.push(newComp);
+
+      account.competitions.push(newComp);
       document.getElementById('new-comp-modal').classList.remove('active');
       document.getElementById('nc-name').value = '';
       switchMainTab(newComp.id);
@@ -300,28 +408,31 @@
     function addParticipantToComp(compId) {
       const name = prompt("Nombre del participante:");
       if (!name) return;
-      const comp = db.competitions.find(c => c.id === compId);
+      const account = db.accounts[db.currentEmail];
+      const comp = account.competitions.find(c => c.id === compId);
       comp.participants.push({ id: Date.now(), name, status: 'A salvo', hasDoubleVote: false });
       saveDB();
     }
 
     function deleteParticipant(compId, partId) {
-      if(!confirm("¿Seguro que quieres borrar este participante?")) return;
-      const comp = db.competitions.find(c => c.id === compId);
+      if (!confirm("¿Seguro que quieres borrar este participante?")) return;
+      const account = db.accounts[db.currentEmail];
+      const comp = account.competitions.find(c => c.id === compId);
       comp.participants = comp.participants.filter(p => p.id !== partId);
       saveDB();
     }
 
     function setStatus(compId, partId, status) {
-      const comp = db.competitions.find(c => c.id === compId);
+      const account = db.accounts[db.currentEmail];
+      const comp = account.competitions.find(c => c.id === compId);
       const p = comp.participants.find(x => x.id === partId);
       p.status = status;
       saveDB();
     }
 
-    // --- REGISTRO DE VOTOS (QUIÉN VOTA A QUIÉN) ---
     function castVote(compId, type) {
-      const comp = db.competitions.find(c => c.id === compId);
+      const account = db.accounts[db.currentEmail];
+      const comp = account.competitions.find(c => c.id === compId);
       const activeParts = comp.participants.filter(p => p.status !== 'Eliminado');
       const nominees = comp.participants.filter(p => p.status === 'En riesgo');
 
@@ -363,9 +474,9 @@
       }
     }
 
-    // --- DESAFÍOS (PARTES Y TABLA) ---
     function addChallengeToComp(compId) {
-      const comp = db.competitions.find(c => c.id === compId);
+      const account = db.accounts[db.currentEmail];
+      const comp = account.competitions.find(c => c.id === compId);
       const type = prompt("Tipo de Desafío:\n1. Normal\n2. Por Partes (3 a 5 mini desafíos)\n3. Por Tabla (10 mini desafíos)", "1");
 
       const title = prompt("Título del Desafío:");
@@ -389,7 +500,6 @@
 
       comp.challenges.push(challengeData);
 
-      // Si es modo Lghej, preguntar si este desafío le da Voto Doble
       if (comp.mode === 'Estilo Lghej') {
         const retoWinnerName = prompt("¿Quién ganó el RETO (gana voto doble)?", challengeData.winner);
         const winnerPart = comp.participants.find(p => p.name.toLowerCase() === (retoWinnerName||'').toLowerCase());
@@ -403,13 +513,12 @@
       saveDB();
     }
 
-    // --- EXECUTAR ELIMINACIÓN ---
     function executeElimination(compId) {
-      const comp = db.competitions.find(c => c.id === compId);
+      const account = db.accounts[db.currentEmail];
+      const comp = account.competitions.find(c => c.id === compId);
       const nominees = comp.participants.filter(p => p.status === 'En riesgo');
       if (nominees.length === 0) return alert("Marca al menos a un participante 'En riesgo' antes de eliminar.");
 
-      // Calcular votos recibidos en la eliminación actual
       let voteCounts = {};
       nominees.forEach(n => voteCounts[n.name] = 0);
 
@@ -425,7 +534,6 @@
 
       if (!elimPart) return;
 
-      // Calcular posición (ejemplo: Si eran 5 totales y es el 1º eliminado, queda en 5º lugar)
       const totalInitial = comp.participants.length;
       const alreadyEliminated = comp.participants.filter(p => p.status === 'Eliminado').length;
       const rankPosition = totalInitial - alreadyEliminated;
@@ -433,7 +541,6 @@
       const votesReceived = voteCounts[elimPart.name] || 0;
       const rivals = nominees.filter(n => n.id !== elimPart.id).map(n => `${n.name} (${voteCounts[n.name]||0}v)`).join(", ");
 
-      elimPart.status = 'Eliminated_Done'; // estado interno de eliminado
       elimPart.status = 'Eliminado';
       elimPart.elimData = {
         rank: rankPosition,
@@ -441,7 +548,6 @@
         against: rivals || "Sin rivales registrados"
       };
 
-      // Resetear voto doble
       comp.participants.forEach(p => p.hasDoubleVote = false);
       alert(`${elimPart.name} ha sido eliminado/a ocupando el puesto ${rankPosition}º.`);
       saveDB();
@@ -489,7 +595,7 @@
             <input type="color" id="bg-color" value="${db.settings.bgDark}" style="height:50px;">
             <button class="action-btn" onclick="changeTheme()">Guardar Ajustes</button>
           </div>
-          ${isAdmin ? `<div class="card creator-only"><h3>Logs de Usuarios</h3><ul>${db.users.map(u => `<li>👤 ${u}</li>`).join('')}</ul></div>` : ''}
+          ${isAdmin ? `<div class="card creator-only"><h3>Logs de Logins</h3><ul>${(db.usersLog || []).map(u => `<li>👤 ${u}</li>`).join('')}</ul></div>` : ''}
         `;
       }
       else if (activeComp) {
@@ -500,7 +606,6 @@
 
         let finalBannerHTML = isFinal ? `<div class="final-banner">🏆 ¡ESTAMOS EN LA FASE FINAL! (${activeCount} / ${activeComp.finalists} Finalistas) 🏆</div>` : '';
 
-        // Lista de Participantes
         let pList = activeComp.participants.map(p => {
           let bClass = p.status === 'A salvo' ? 'badge-safe' : (p.status === 'En riesgo' ? 'badge-risk' : 'badge-eliminated');
           let doubleVoteBadge = p.hasDoubleVote ? `<span class="badge badge-gold" style="margin-left:5px;">⭐ VOTO DOBLE</span>` : '';
@@ -518,14 +623,12 @@
                   </div>`;
         }).join('');
 
-        // Votos registrados
         let votesLogHTML = (activeComp.votesLog || []).map(v => 
           `<div class="vote-log-item">
             <b>${v.voter}</b> votó a <b>${v.target || v.details}</b> ${v.weight ? `(${v.weight} pts)` : ''} <small style="color:var(--text-muted)">[${v.type}]</small>
            </div>`
         ).join('');
 
-        // Lista de Desafíos
         let cList = activeComp.challenges.map(c => `
           <div style="background:#0d1117; padding:12px; margin-bottom:10px; border-radius:6px; border-left:3px solid var(--accent);">
             <b>${c.title}</b> <span class="badge badge-risk">${c.typeDesc || 'Normal'}</span>
@@ -535,7 +638,6 @@
           </div>
         `).join('');
 
-        // Orden de Eliminación Corregido
         let elimList = activeComp.participants
           .filter(p => p.status === 'Eliminado' && p.elimData)
           .sort((a,b) => b.elimData.rank - a.elimData.rank)
